@@ -1,0 +1,34 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical" >
+
+    <ImageView
+        android:id="@+id/ID_ivMain"
+        android:layout_width="fill_parent"
+        android:layout_height="300dp"
+        android:background="@android:color/black"
+        android:scaleType="centerInside"
+        android:src="@drawable/img" />
+
+    <TextView
+        android:id="@+id/ID_tvPath"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="保存路径: " />
+
+    <EditText
+        android:id="@+id/ID_etFileName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="10" >
+    </EditText>
+
+    <Button
+        android:id="@+id/ID_btnSave"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="保存" />
+
+</LinearLayout>

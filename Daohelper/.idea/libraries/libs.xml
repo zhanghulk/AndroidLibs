@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="libs">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/AreaDemo/libs/WheelView_v1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/AreaDemo/libs/DaoHelper_v1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/AreaDemo/libs/android-support-v4.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

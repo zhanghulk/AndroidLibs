@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="channelId">100001</string>
+    <string name="channelName">google</string>
+    <item type="bool" name="is_debug">true</item>
+   
+</resources>

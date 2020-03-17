@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="df_table_item_bgcolor_normal">#FFFFFFFF</color>
+    <color name="df_table_item_bgcolor_pressed">#DDF3FF</color>
+</resources>

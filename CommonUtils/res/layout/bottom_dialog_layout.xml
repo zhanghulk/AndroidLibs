@@ -1,0 +1,53 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#5a5a5a"
+    android:orientation="vertical" >
+
+    <LinearLayout
+        android:id="@+id/df_myself_personalInfo_bottomMenuLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        android:orientation="vertical" >
+
+        <Button
+            style="@style/bottom_dialog_button_style"
+            android:alpha="150"
+            android:background="@drawable/df_table_item_top"
+            android:text="选项"
+            android:editable="false"
+            android:textColor="@android:color/holo_orange_light"
+            tools:ignore="UnusedAttribute" />
+
+        <Button
+            android:id="@+id/df_myself_personalInfo_openCamera"
+            style="@style/bottom_dialog_button_style"
+            android:layout_marginTop="0.1dip"
+            android:alpha="150"
+            android:background="@drawable/df_table_item_center"
+            android:text="拍照"
+            tools:ignore="UnusedAttribute" />
+
+        <Button
+            android:id="@+id/df_myself_personalInfo_openPhtots"
+            style="@style/bottom_dialog_button_style"
+            android:layout_marginTop="0.1dip"
+            android:alpha="150"
+            android:background="@drawable/df_table_item_bottom"
+            android:text="从相册选择"
+            tools:ignore="UnusedAttribute" />
+
+        <Button
+            android:id="@+id/df_myself_personalInfo_hideMenu"
+            style="@style/bottom_dialog_button_style"
+            android:layout_marginTop="5dip"
+            android:alpha="150"
+            android:background="@drawable/df_table_item_single"
+            android:text="取消"
+            android:textColor="@android:color/holo_red_dark"
+            tools:ignore="UnusedAttribute" />
+    </LinearLayout>
+
+</LinearLayout>

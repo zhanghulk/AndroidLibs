@@ -1,0 +1,15 @@
+--- a/360contacts155/project.properties
++++ b/360contacts155/project.properties
+@@ -4,10 +4,10 @@
+ # This file must be checked in Version Control Systems.
+ #
+ # To customize properties used by the Ant build system use,
+-# "ant.properties", and override values to adapt the script to your
+-# project structure.
++# "ant.properties", and override values to adapt the script to your lllllll
+ 
+ # Project target.
+ target=android-17
++#hhhhhhhhhhhhhhh
+ proguard.enabled=true
+ proguard.config=proguard-project.txt
