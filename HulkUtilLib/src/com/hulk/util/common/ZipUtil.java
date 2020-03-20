@@ -115,11 +115,13 @@ public class ZipUtil {
         InputStream is = null;
         if(file == null) {
         	PrintUtil.w(TAG, "zipFile: Invalid file: " + file + ", relativePath: " + relativePath + ", zos: " + zos);
-            throw new NullPointerException("zipFile: Invalid file: " + file + ", relativePath: " + relativePath + ", zos: " + zos);
+            //throw new NullPointerException("zipFile: Invalid file: " + file + ", relativePath: " + relativePath + ", zos: " + zos);
+        	return false;
         }
         if(!file.exists()) {
         	PrintUtil.w(TAG, "zipFile: Not existed file: " + file);
-            throw new RuntimeException("zipFile: Not existed file: " + file);
+            //throw new RuntimeException("zipFile: Not existed file: " + file);
+        	return false;
         }
         try {
             if(!file.isDirectory()) {

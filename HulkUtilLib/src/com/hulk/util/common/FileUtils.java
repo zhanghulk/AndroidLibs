@@ -336,7 +336,7 @@ public class FileUtils {
         		PrintUtil.w(TAG, "deleteOldFiles: Ignored file is null");
         		break;
         	}
-            if(file.exists()) {
+            if(!file.exists()) {
         		PrintUtil.w(TAG, "deleteOldFiles: Ignored not existed file: " + file);
         		break;
         	}

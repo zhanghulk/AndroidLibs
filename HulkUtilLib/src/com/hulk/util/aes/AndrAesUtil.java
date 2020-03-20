@@ -16,7 +16,7 @@ import javax.crypto.spec.SecretKeySpec;
  * Created by zhanghao on 18-3-19.
  */
 
-public class AndroidAesUtil {
+public class AndrAesUtil {
     public final static String TAG = "AndroidAesUtil";
 
     //public static final String VIPARA = "1269571569321021";
@@ -34,7 +34,7 @@ public class AndroidAesUtil {
 
     public static void test() {
         String text = "123456789";
-        byte[] encryptedData = AndroidAesUtil.encrypt(text, KEY);
+        byte[] encryptedData = AndrAesUtil.encrypt(text, KEY);
         String cliperText = byte2HexStr(encryptedData);
         System.out.println("Oraginal  text: " + text);
         System.out.println("encrypted HexStr >>> " + cliperText);
