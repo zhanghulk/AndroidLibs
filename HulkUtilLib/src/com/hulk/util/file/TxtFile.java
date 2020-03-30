@@ -76,7 +76,9 @@ public class TxtFile {
 				if(data != null) {
 					bos.write(data);
 					length += data.length;
-					PrintUtil.i(TAG, "write text length= " + data.length + " to file: " + mFile);
+					//PrintUtil.i(TAG, "write text length= " + data.length + " to file: " + mFile);
+				} else {
+					PrintUtil.e(TAG, "write failed: data is null for mCharsetName=" + mCharsetName + ", text=" + text);
 				}
 				return true;
 			} catch (Exception e) {
@@ -97,7 +99,7 @@ public class TxtFile {
 	
 	public boolean createNewFile() throws IOException {
 		if(mFile.exists()) {
-			PrintUtil.w(TAG, "Exists file: " + mFile);
+			//PrintUtil.i(TAG, "Exists file: " + mFile);
 			return true;
 		}
 		if (!makeParentDir()) {

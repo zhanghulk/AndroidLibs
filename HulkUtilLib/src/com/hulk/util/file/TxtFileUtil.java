@@ -10,10 +10,7 @@ import java.io.InputStreamReader;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Arrays;
-import java.util.Comparator;
 
 import android.content.Context;
 import android.text.TextUtils;
@@ -201,7 +198,7 @@ public class TxtFileUtil {
         return lines;
     }
 	
-	public static boolean writeLines(List<String> lines, String filePath) {
+	public static boolean writeLines(List<String> lines, String filePath) throws Exception {
 		if (lines == null || lines.isEmpty()) {
 			PrintUtil.w(TAG, "write canceled, list is null or empty !! ");
 			return false;
@@ -217,7 +214,7 @@ public class TxtFileUtil {
 		return write(buffer.toString(), filePath);
 	}
 
-	public static boolean write(String text, String filePath){
+	public static boolean write(String text, String filePath) throws Exception {
         if (text != null && text.length() > 0) {
             FileWriter writer = null;
             try {
@@ -228,10 +225,13 @@ public class TxtFileUtil {
                 }
                 File pDir = file.getParentFile();
                 if (!pDir.exists()) {
-                    if (!pDir.mkdirs()) {
-                        PrintUtil.e(TAG, "writeTextToFile canceled, create failed parent dir: " + pDir
-                        		+ ", please check Manifest whether has permissin to write storage !! ");
-                        return false;
+                	boolean mkdirs = pDir.mkdirs();
+                	PrintUtil.w(TAG, "create parent file mkdirs= " + mkdirs);
+                    if (!mkdirs) {
+                    	String err = "Failed to create parent dir: " + pDir
+                        		+ ", please check Manifest whether has permissin to write storage";
+                        PrintUtil.e(TAG, err);
+                        throw new RuntimeException(err);
                     }
                 }
                 writer = new FileWriter(file);
@@ -240,7 +240,7 @@ public class TxtFileUtil {
                 return true;
             } catch (Exception e) {
                 PrintUtil.e(TAG, "writeTextToFile Exception: " + e + ", text: " + text, e);
-                e.printStackTrace();
+                throw e;
             }finally{
                 if(writer!=null){
                     try{
