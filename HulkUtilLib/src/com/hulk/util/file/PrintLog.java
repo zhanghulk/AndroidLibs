@@ -517,7 +517,7 @@ public class PrintLog {
     		if(logFilenames != null) {
     			logFileCount = logFilenames.length;
     		}
-    		PrintUtil.i(TAG, "renderFiles： logFileCount= " + logFileCount);
+    		//PrintUtil.i(TAG, "renderFiles： logFileCount= " + logFileCount);
     	} else {
     		PrintUtil.i(TAG, "renderFiles： Not existed dir: " + mDir);
     	}

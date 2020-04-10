@@ -14,7 +14,7 @@ public class CCBEncryptUtils {
 
     public final static String TAG = "CCBEncryptUtils";
 
-    public final static String KEY = "CCB_360tianji_!@#$%";//网络传输http body 加密aes密钥
+    public final static String KEY = "1234567890123456";//测试用的key,必须16个字符
 
     private static byte[] sRawKey = null;
 

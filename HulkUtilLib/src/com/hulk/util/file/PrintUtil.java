@@ -110,6 +110,79 @@ public class PrintUtil {
     }
 	
 	/**
+     * 获取异常堆栈信息
+     * @param e
+     * @return
+     */
+    public static String getStackTrace(Throwable e) {
+        if (e == null) {
+            return "";
+        }
+        ByteArrayOutputStream baos = null;
+        try {
+            baos = new ByteArrayOutputStream();
+            PrintStream ps = new PrintStream(baos);
+            e.printStackTrace(ps);
+            String str = baos.toString();
+            return str;
+        } catch (Exception ex) {
+            PrintUtil.e(TAG, "getStackTrace failed: " + ex, ex);
+        } finally {
+        	if(baos != null) {
+        		try {
+        			baos.close();
+        		} catch (Exception ex) {
+        			//ignored
+        		}
+        	}
+        }
+        return "";
+    }
+    
+    /**
+     * 获取异常和cause等关键信息
+     * 如果cause为空则打印所有
+     * @param e
+     * @return
+     */
+    public static String getDetailCause(Throwable e) {
+        if (e == null) {
+            return "";
+        }
+        ByteArrayOutputStream baos = null;
+        try {
+            baos = new ByteArrayOutputStream();
+            PrintStream ps = new PrintStream(baos);
+            StringBuffer buff = new StringBuffer();
+            Throwable cause = e.getCause();
+            if(cause != null) {
+            	//简化的detail和cause
+            	buff.append(e.toString());
+            	cause.printStackTrace(ps);
+            	String str = baos.toString();
+                buff.append("\nCaused by: ").append(str);
+            } else {
+            	//打印所有trace
+            	e.printStackTrace(ps);
+            	String str = baos.toString();
+                buff.append(str);
+            }
+            return buff.toString();
+        } catch (Throwable ex) {
+            PrintUtil.e(TAG, "getDetailCause failed: " + ex, ex);
+        } finally {
+        	if(baos != null) {
+        		try {
+        			baos.close();
+        		} catch (Exception ex) {
+        			//ignored
+        		}
+        	}
+        }
+        return "";
+    }
+	
+	/**
      * 合并异常堆栈信息
      * <p>text后面追加异常堆栈信息
      * @param text
