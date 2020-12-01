@@ -430,7 +430,7 @@ public class PrintLog {
     	}
     	if(isBufferExceeding()) {
     		try {
-    			int len = flush();
+    			int len = doFlush();
     			return len;
     		} catch (Throwable e) {
     			PrintUtil.e(TAG, "flushBuffer failed: " + e, e);
@@ -446,10 +446,20 @@ public class PrintLog {
     
     /**
      * Flush buffer and return written log string length.
+     * @return flush writen result.
+     * @throws Exception
+     */
+    public boolean flush() throws Exception {
+    	int flushed = doFlush();
+    	return flushed > 0;
+    }
+    
+    /**
+     * Flush buffer and return written log string length.
      * @return The length of written log string. If failed to write file , return -1.
      * @throws Exception
      */
-    public int flush() throws Exception {
+    public int doFlush() throws Exception {
     	synchronized (PrintLog.class) {
     		if(isBufferEmpty()) {
         		//Ignored invalid buffer
@@ -462,11 +472,11 @@ public class PrintLog {
         	// write text and clear buffer
         	boolean written = writeToFile(str, true);
         	if(!written) {
-        		PrintUtil.w(TAG, "##flush: Failed to write buffer to file");
+        		PrintUtil.w(TAG, "##doFlush: Failed to write buffer to file");
          		return -1;
         	}
         	int len = clearBuffer();
-        	//PrintUtil.i(TAG, "flush: written= " + written + ", text len= " + len);
+        	PrintUtil.i(TAG, "doFlush text len= " + len);
             return len;
     	}
     }
