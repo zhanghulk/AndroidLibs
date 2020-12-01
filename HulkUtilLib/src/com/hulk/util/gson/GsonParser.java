@@ -128,7 +128,7 @@ public class GsonParser {
             Log.e(TAG, "fromJsonArrayOpt failed: jsonArray is null");
             return null;
         }
-        ArrayList<T> list = new ArrayList<>();
+        ArrayList<T> list = new ArrayList<T>();
         int length = jsonArray.length();
         for (int i = 0; i < length; i++) {
             JSONObject json = jsonArray.optJSONObject(i);

@@ -35,8 +35,15 @@ public class PrintLog {
     /**日志文件个数最大数量*/
     public static final int LOG_MAX_FILE_COUNT = 10;
     
-    /**最大缓存大小 ，超过之后立刻写入: 10kb*/
-    public static final int MAX_BUFFER_LENGTH = 1024 * 10;
+    /**
+     * 默认缓存大小 ，超过之后立刻写入，提高运行效率
+     */
+    public static final int DEFAULT_BUFFER_LENGTH = 1024 * 4;
+    
+    /**
+     * 最大缓存大小 ，超过之后立刻写入，必须清空缓存，避免OOM
+     */
+    public static final int MAX_BUFFER_LENGTH = 1024 * 1024;
     
     public static final String FILE_EXTENSION = ".txt";
     
@@ -47,7 +54,7 @@ public class PrintLog {
     TxtFile mTxtFile;
   //是否为缓冲区模式，可以减少IO此时，自己控制缓冲区，可以提高效率
     boolean bufferMode = false;
-    int bufferLength = MAX_BUFFER_LENGTH;
+    int bufferLength = DEFAULT_BUFFER_LENGTH;
     StringBuffer buffer;
     //是否每次新起一行
     boolean lineMode = true;
@@ -135,6 +142,7 @@ public class PrintLog {
     
     public void setBufferMode(boolean bufferMode) {
     	this.bufferMode = bufferMode;
+    	ensureBuffer();
     }
     
     public void setBufferLength(int bufferLength) {
@@ -323,7 +331,6 @@ public class PrintLog {
      * @throws Exception
      */
     public PrintLog appendStr(String str) throws Exception {
-    	flushIfExtends();
     	appendToBuffer(str);
 		return this;
     }
@@ -398,6 +405,7 @@ public class PrintLog {
     
     /**
      * 追加日志
+     * <p>如果超过缓存大小，立刻写入文件
      * @param str
      * @return
      * @throws Exception
@@ -406,39 +414,127 @@ public class PrintLog {
     	synchronized (PrintLog.class) {
     		ensureBuffer();
     		buffer.append(str);
+    		flushBuffer();
     		return this;
     	}
     }
     
     /**
-     * flush buffer if current buffer length extend max length
-     * @throws Exception
+     * Flush buffer if current buffer length extend max length
+     * @return The length of written log string. If failed to write file , return -1.
      */
-    public void flushIfExtends() throws Exception {
-    	if (bufferLength > 0) {
-    		if(buffer.length() > bufferLength) {
-        		flush();
-        	}
+    public int flushBuffer() {
+    	if(isBufferEmpty()) {
+    		//Ignored invalid buffer
+    		return 0;
     	}
+    	if(isBufferExceeding()) {
+    		try {
+    			int len = flush();
+    			return len;
+    		} catch (Throwable e) {
+    			PrintUtil.e(TAG, "flushBuffer failed: " + e, e);
+    		}
+    	}
+    	if(isBufferMaxExceeding()) {
+			//Force clear buffer avoid to OOM
+			int len = clearBuffer();
+			PrintUtil.w(TAG, "##flush: Force clear buffer avoid to OOM， length: " + len);
+		}
+    	return 0;
     }
     
-    public boolean flush() throws Exception {
-    	if(buffer == null || buffer.length() <= 0) {
-    		//ignored invalid buffer
-    		return true;
-    	}
+    /**
+     * Flush buffer and return written log string length.
+     * @return The length of written log string. If failed to write file , return -1.
+     * @throws Exception
+     */
+    public int flush() throws Exception {
     	synchronized (PrintLog.class) {
+    		if(isBufferEmpty()) {
+        		//Ignored invalid buffer
+        		return 0;
+        	}
     		String str = buffer.toString();
         	if(str == null || str.equals("")) {
-        		return true;
+        		return 0;
         	}
         	// write text and clear buffer
         	boolean written = writeToFile(str, true);
-        	int len = buffer.length() - 1;
+        	if(!written) {
+        		PrintUtil.w(TAG, "##flush: Failed to write buffer to file");
+         		return -1;
+        	}
+        	int len = clearBuffer();
         	//PrintUtil.i(TAG, "flush: written= " + written + ", text len= " + len);
-    		buffer.delete(0, len - 1);
-            return written;
+            return len;
     	}
+    }
+    
+    /**
+     * 缓存是否超过长度限制
+     * @return
+     */
+    public boolean isBufferExceeding() {
+    	if(isBufferEmpty()) {
+    		//Ignored invalid buffer
+    		return false;
+    	}
+    	int length = buffer.length();
+    	if(length > bufferLength) {
+    		return true;
+    	}
+    	if(isBufferMaxExceeding()) {
+    		//超最大限制必须写入
+    		return true;
+    	}
+    	return false;
+    }
+    
+    /**
+     * 缓存是否超过最大长度限制
+     * <p> 超最大限制必须写入，或者清除缓存避免OOM
+     * @return
+     */
+    public boolean isBufferMaxExceeding() {
+    	if(isBufferEmpty()) {
+    		//Ignored invalid buffer
+    		return false;
+    	}
+    	int length = buffer.length();
+    	if(length > MAX_BUFFER_LENGTH) {
+    		//超最大限制必须写入，或者清除缓存避免OOM
+    		return true;
+    	}
+    	return false;
+    }
+    
+    /**
+     * 清空缓存数据
+     * @return cleared string length
+     */
+    public int clearBuffer() {
+    	if(isBufferEmpty()) {
+    		//Ignored invalid buffer
+    		return 0;
+    	}
+    	int len = buffer.length();
+    	//delete包前不包后
+		//buffer.delete(0, len);
+    	//setLength效率不delete高
+		buffer.setLength(0);
+        return len;
+    }
+    
+    /**
+     * 缓存是否为空
+     * @return
+     */
+    public boolean isBufferEmpty() {
+    	if(buffer == null || buffer.length() <= 0) {
+    		return true;
+    	}
+    	return false;
     }
     
     /**
