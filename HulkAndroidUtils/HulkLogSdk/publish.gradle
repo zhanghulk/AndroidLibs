@@ -9,7 +9,7 @@ def publishPassword = rootProject.ext.publishPassword
 publishing {
     publications {
         maven(MavenPublication) {
-            groupId "com.mobile.emm"
+            groupId "com.hulk.android"
             artifactId "HulkLogSdk"
             version "1.0.1"
             //本地上传的aar文件
