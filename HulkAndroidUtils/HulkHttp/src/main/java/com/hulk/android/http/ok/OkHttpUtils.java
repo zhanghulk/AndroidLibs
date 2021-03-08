@@ -3,7 +3,6 @@ package com.hulk.android.http.ok;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.google.protobuf.nano.MessageNano;
 import com.hulk.android.http.conn.HttpException;
 import com.hulk.android.http.conn.HttpResult;
 import com.hulk.android.http.content.StreamTool;
@@ -282,35 +281,10 @@ public class OkHttpUtils {
      * @throws IOException
      * @throws HttpException
      */
-    public static byte[] sendProtobufPostRequest(String url, byte[] requestData)
+    public static byte[] sendProtoPostRequest(String url, byte[] requestData)
             throws IOException, RuntimeException, HttpException {
         String contentType = CONTENT_TYPE_PROTOBUF;
         return sendHttpPostRequest(url, contentType, requestData);
-    }
-
-    /**
-     * Post方式请求网络接口，返回已被解析的protobuifMessageNano子类对象
-     * @param url
-     * @param requestMsm 请求proto对象消息
-     * @param responseMgs 返回对象实例(接收返回数据)
-     * @param <R>
-     * @return
-     * @throws IOException
-     * @throws RuntimeException
-     * @throws HttpException
-     */
-    public static <R extends MessageNano> R sendProtoPostRequest(String url, MessageNano requestMsm, R responseMgs)
-            throws IOException, RuntimeException, HttpException {
-        byte[] requestData = MessageNano.toByteArray(requestMsm);
-        byte[] responseData = sendProtobufPostRequest(url, requestData);
-        if (responseData != null) {
-            R response = MessageNano.mergeFrom(responseMgs, responseData);
-            logi("sendProtoPostRequest: response: " + response);
-            return response;
-        } else {
-            logw("sendProtoPostRequest: responseData is null for url: " + url);
-        }
-        return null;
     }
 
     /**
