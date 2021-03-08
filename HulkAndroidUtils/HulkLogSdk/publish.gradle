@@ -1,0 +1,31 @@
+//--------------maven-publish-------------------//
+apply plugin: 'maven-publish'
+
+//服务器账号
+def publishUrl = rootProject.ext.publishUrl
+def publishUsername = rootProject.ext.publishUsername
+def publishPassword = rootProject.ext.publishPassword
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId "com.mobile.emm"
+            artifactId "HulkLogSdk"
+            version "1.0.1"
+            //本地上传的aar文件
+            def localAarFileName = "$buildDir/outputs/aar/${project.getName()}-release.aar"
+            println("publishing maven localAarFileName: " + localAarFileName + ", version:" + version)
+            artifact(localAarFileName)
+        }
+    }
+    repositories {
+        maven {
+            url = publishUrl
+            credentials {
+                username = publishUsername
+                password = publishPassword
+            }
+        }
+    }
+}
+//--------------maven-publish-------------------//
