@@ -197,6 +197,7 @@ public class PrintUtil {
         try {
             baos = new ByteArrayOutputStream();
             if (text != null) {
+            	text = text + "\n";
                 //text放在e的trace上面
                 baos.write(text.getBytes());
             }

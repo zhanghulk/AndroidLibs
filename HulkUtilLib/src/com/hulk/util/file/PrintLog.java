@@ -31,9 +31,8 @@ public class PrintLog {
     public static String TAG = "PrintLog";
     /**默认每个文件最大5M  */
     public static final long FILE_LENGTH_LIMIT = 1024 * 1024 * 5;
-    public static final long DEFAULT_FILE_LENGTH = 1024 * 1024 * 2;
     /**日志文件个数最大数量*/
-    public static final int LOG_MAX_FILE_COUNT = 10;
+    public static final int LOG_MAX_FILE_COUNT = 5;
     
     /**
      * 默认缓存大小 ，超过之后立刻写入，提高运行效率
@@ -71,7 +70,7 @@ public class PrintLog {
     String[] logFilenames;//单签目录下文件数组
     
     //限制文件大小,最近文件进行判断穿件文件
-    long maxFileLength = DEFAULT_FILE_LENGTH;
+    long maxFileLength = FILE_LENGTH_LIMIT;
 
     public PrintLog(String dir) {
     	this.mDir = new File(dir);
