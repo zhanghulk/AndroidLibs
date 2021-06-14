@@ -1,0 +1,4 @@
+include ':HulkHttp'
+include ':HulkLogSdk'
+include ':app'
+rootProject.name = "HulkAndroidUtils"

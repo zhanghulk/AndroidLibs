@@ -1,0 +1,41 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+buildscript {
+    repositories {
+        //aliyun maven 做例子,实际开发中自行修改撑死右路
+        maven { url "https://maven.aliyun.com/repository/public" }
+        jcenter()
+        google()
+    }
+    dependencies {
+        classpath "com.android.tools.build:gradle:4.1.1"
+
+        // NOTE: Do not place your application dependencies here; they belong
+        // in the individual module build.gradle files
+    }
+}
+
+allprojects {
+    repositories {
+        //aliyun maven 做例子,实际开发中自行修改撑死右路
+        maven { url "https://maven.aliyun.com/repository/public" }
+        jcenter()
+        google()
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
+
+ext {
+    compileSdkVersion = 30
+    buildToolsVersion = '30.0.2'
+    minSdkVersion = 16
+    targetSdkVersion = 25
+
+    //maven-publish server & account
+    //aliyun maven 做例子,实际开发中自行修改撑死右路
+    publishUrl = "https://maven.aliyun.com/repository/public"
+    publishUsername = "hulk"
+    publishPassword = "1234567890"
+}
