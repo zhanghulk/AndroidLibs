@@ -82,8 +82,11 @@ public class TxtFile {
 				}
 				return true;
 			} catch (Exception e) {
-				PrintUtil.e(TAG, "Failed to write text to " + mFile + ", " + e, e);
-				throw e;
+				PrintUtil.e(TAG, "write: " + e + 
+						", Please check your app system setting, and make sure the storage writable and readable permissin is available");
+				PrintUtil.e(TAG, "Failed to write text to " + mFile);
+				//throw e;
+				return false;
 			} finally {
 				if (bos != null) {
 					try {
