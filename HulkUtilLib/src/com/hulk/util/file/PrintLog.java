@@ -2,11 +2,13 @@ package com.hulk.util.file;
 
 import com.hulk.util.common.FileUtils;
 import com.hulk.util.file.TxtFile;
+import com.hulk.model.pc.*;
 
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.LinkedList;
 
 /**
  * 打印log信息到txt文件中. 日志文件名称根据timeMode分为两种模式：
@@ -71,15 +73,36 @@ public class PrintLog {
     
     //限制文件大小,最近文件进行判断穿件文件
     long maxFileLength = FILE_LENGTH_LIMIT;
+    
+    Object mWriteFileLock = new Object();
+    /**
+     * 异步写入模式
+     * <p> 利用生产者-消费者内模式实现
+     */
+    private boolean mWriteLogAsyncMode = true;
+    
+    private LogFileConsumer mFileConsumer = null;
+    private LogWarehouse mLogWarehouse = null;
 
+    private int mWarehouseSizeMax = 10;
+    
+    /**
+     * 是否初始化成功的
+     */
+    private boolean mInited = false;
+    
+    private boolean mDebugMode = true;
+    
     public PrintLog(String dir) {
     	this.mDir = new File(dir);
+    	init();
     }
 
     public PrintLog(String dir, boolean bufferMode, int bufferLength) {
     	this.mDir = new File(dir);
         this.bufferMode = bufferMode;
         this.bufferLength = bufferLength;
+        init();
     }
     
     public PrintLog(TxtFile file, boolean bufferMode, boolean lineMode) {
@@ -87,6 +110,7 @@ public class PrintLog {
     	this.mDir = getParentDirFile();
         this.bufferMode = bufferMode;
         this.lineMode = lineMode;
+        init();
     }
     
     public void setMaxFileCount(int maxFileCount) {
@@ -410,12 +434,10 @@ public class PrintLog {
      * @throws Exception
      */
     public PrintLog appendToBuffer(String str) throws Exception {
-    	synchronized (PrintLog.class) {
-    		ensureBuffer();
-    		buffer.append(str);
-    		flushBuffer();
-    		return this;
-    	}
+    	ensureBuffer();
+		buffer.append(str);
+		flushBuffer();
+		return this;
     }
     
     /**
@@ -459,25 +481,23 @@ public class PrintLog {
      * @throws Exception
      */
     public int doFlush() throws Exception {
-    	synchronized (PrintLog.class) {
-    		if(isBufferEmpty()) {
-        		//Ignored invalid buffer
-        		return 0;
-        	}
-    		String str = buffer.toString();
-        	if(str == null || str.equals("")) {
-        		return 0;
-        	}
-        	// write text and clear buffer
-        	boolean written = writeToFile(str, true);
-        	if(!written) {
-        		PrintUtil.w(TAG, "##doFlush: Failed to write buffer to file");
-         		return -1;
-        	}
-        	int len = clearBuffer();
-        	PrintUtil.i(TAG, "doFlush text len= " + len);
-            return len;
+    	if(isBufferEmpty()) {
+    		//Ignored invalid buffer
+    		return 0;
     	}
+		String str = buffer.toString();
+    	if(str == null || str.equals("")) {
+    		return 0;
+    	}
+    	// write text and clear buffer
+    	boolean written = writeToFile(str, true);
+    	if(!written) {
+    		PrintUtil.w(TAG, "##doFlush: Failed to write buffer to file");
+     		return -1;
+    	}
+    	int len = clearBuffer();
+    	PrintUtil.i(TAG, "doFlush text len= " + len);
+        return len;
     }
     
     /**
@@ -561,6 +581,14 @@ public class PrintLog {
     	return writeToFile(text, append);
     }
     
+    public void setWriteLogAsyncMode(boolean writeLogAsyncMode) {
+    	this.mWriteLogAsyncMode = false;
+    }
+    
+    public boolean isWriteLogAsyncMode() {
+    	return this.mWriteLogAsyncMode;
+    }
+    
     /**
      * 写入文本
      * @param str
@@ -569,15 +597,125 @@ public class PrintLog {
      * @throws Exception 
      */
     private boolean writeToFile(String text, boolean append) throws Exception {
-    	synchronized (PrintLog.class) {
-    		renderFiles();
-    		//确保日志问价存在
-    		ensureLogFile();
-        	//文件数量过多，删除旧的文件
-    		deleteOldFiles();
-    		boolean written = mTxtFile.write(text, append);
+    	if(!isInited()) {
+    		return false;
+    	}
+    	if(isWriteLogAsyncMode()) {
+    		return writeToFileAsync(text, append);
+    	} else {
+    		//默认写法：直接在当前线程写入文件，可能或出现线程等待时间较长
+    		return writeToFileSync(text, append);
+    	}
+    }
+    
+    /**
+     * 异步写入日志信息到文件
+     * <p> 利用生产者-消费者内模式实现
+     * @param text
+     * @param append
+     * @return
+     * @throws Exception
+     */
+    private boolean writeToFileAsync(String text, boolean append) throws Exception {
+    	initFileConsumer();
+    	if(mTxtFile == null) {
+    		//为空说明之前初始化时已经失败，此处没不要重复创建，有些设备会耗时过长，出现ANR
+    		return false;
+    	}
+    	if(mFileConsumer != null) {
+    		mFileConsumer.setAppend(append);
+    		mFileConsumer.doConsume(text);
+    		return true;
+    	}
+    	return false;
+    }
+    
+    /**
+     * 当前线程写入文件
+     * <p>老版本默认写法：直接在当前线程写入文件，可能或出现线程等待时间较长,有些设备会耗时过长，出现ANR.
+     * @param text
+     * @param append
+     * @return
+     * @throws Exception
+     */
+    private boolean writeToFileSync(String text, boolean append) throws Exception {
+    	//此处需要使用同步锁，避免文件内容乱序
+    	synchronized (mWriteFileLock) {
+    		if(mTxtFile == null) {
+        		//为空说明之前初始化时已经失败，此处没不要重复创建，有些设备会耗时过长，出现ANR
+        		return false;
+        	}
+    		boolean written = false;
+    		try {
+    			written = mTxtFile.write(text, append);
+    		} catch (Throwable e) {
+    			SysLog.e(TAG, "writeToFileSync Failed:" + e);
+    		}
             return written;
     	}
+    }
+    
+    /**
+     * 是否初始化成功的
+     * @return
+     */
+    public boolean isInited() {
+    	return mInited;
+    }
+    
+    /**
+     * 初始化日志文件
+     * @throws IOException 
+     */
+    public void init() {
+		try {
+			initFileConsumer();
+			renderFiles();
+			//确保日志文件存在
+			ensureLogFile();
+			//文件数量过多，删除旧的文件
+			deleteOldFiles();
+			mInited = true;
+		} catch (Throwable e) {
+			PrintUtil.e(TAG, "init failed: " + e);
+		}
+    }
+    
+    /**
+     * 初始化文件消费者
+     */
+    public void doInitFileConsumer() {
+    	mLogWarehouse = new LogWarehouse(mWarehouseSizeMax, new LinkedList<String>());
+    	mFileConsumer = new LogFileConsumer(mLogWarehouse, mTxtFile);
+    }
+    
+    /**
+     * 初始化文件消费者
+     */
+    public void initFileConsumer() {
+    	if(mFileConsumer == null) {
+    		doInitFileConsumer();
+    	}
+    }
+    
+    /**
+     * 初始化文件消费者仓库最大值
+     * @param warehouseSizeMax
+     */
+    public void setWarehouseSizeMax(int warehouseSizeMax) {
+    	mWarehouseSizeMax = warehouseSizeMax;
+    	if(mLogWarehouse != null) {
+    		
+    	}
+    	mLogWarehouse.setMax(warehouseSizeMax);
+    }
+    
+    public void setFileConsumer(LogFileConsumer fileConsumer) {
+    	mFileConsumer = fileConsumer;
+    }
+    
+    public LogFileConsumer getFileConsumer() {
+    	return mFileConsumer;
     }
     
     public int getFileCount() {
@@ -602,30 +740,34 @@ public class PrintLog {
     private void renderFiles() {
     	logFileCount = 0;
     	if(mDir != null && mDir.exists()) {
-    		//列出dir下的文件列表，仅文件名不含签名路径,如果需要文件请使用dir.listFIles();
-    		logFilenames = mDir.list(new FilenameFilter() {
-                @Override
-                public boolean accept(File dir, String name) {
-                	if(dir != null && name != null) {
-                		//刨开忽略文件和文件夹
-                		File file = new File(dir, name);
-                		if(file.isDirectory()) {
-                			return false;
-                		}
-                		if(name.contains(LOCKED_FLAG)) {
-                			return false;
-                		}
-                	}
-                    return true;
-                }
-            });
-    		if(logFilenames != null) {
-    			logFileCount = logFilenames.length;
-    		}
+    		renderLogFiles();
     		//PrintUtil.i(TAG, "renderFiles： logFileCount= " + logFileCount);
     	} else {
     		PrintUtil.i(TAG, "renderFiles： Not existed dir: " + mDir);
     	}
+    }
+    
+    private void renderLogFiles() {
+    	//列出dir下的文件列表，仅文件名不含签名路径,如果需要文件请使用dir.listFIles();
+		logFilenames = mDir.list(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+            	if(dir != null && name != null) {
+            		//刨开忽略文件和文件夹
+            		File file = new File(dir, name);
+            		if(file.isDirectory()) {
+            			return false;
+            		}
+            		if(name.contains(LOCKED_FLAG)) {
+            			return false;
+            		}
+            	}
+                return true;
+            }
+        });
+		if(logFilenames != null) {
+			logFileCount = logFilenames.length;
+		}
     }
     
     /**
@@ -712,24 +854,19 @@ public class PrintLog {
      * @return
      * @throws IOException 
      */
-    public TxtFile createNewFile(boolean timeMode) {
-    	try {
-    		String dir = getDirPath();
-        	ensureFileExtension();
-            String filePath = TxtFileUtil.createFilePath(dir, logPrefix, fileExtension, timeMode);
-        	TxtFile logFile = new TxtFile(filePath);
-        	boolean created = true;
-        	if(!logFile.exists()) {
-        		created = logFile.createNewFile();
-        		PrintUtil.w(TAG, "create log new file: " + logFile + "" + created);
-        	} else {
-        		PrintUtil.w(TAG, "Existed log file: " + logFile);
-        	}
-        	return logFile;
-    	} catch (Exception e) {
-    		PrintUtil.e(TAG, "createNewFile error: " + e, e);
+    public TxtFile createNewFile(boolean timeMode) throws IOException {
+    	String dir = getDirPath();
+    	ensureFileExtension();
+        String filePath = TxtFileUtil.createFilePath(dir, logPrefix, fileExtension, timeMode);
+    	TxtFile logFile = new TxtFile(filePath);
+    	boolean created = true;
+    	if(!logFile.exists()) {
+    		created = logFile.createNewFile();
+    		PrintUtil.w(TAG, "create log new file: " + logFile + "" + created);
+    	} else {
+    		PrintUtil.w(TAG, "Existed log file: " + logFile);
     	}
-    	return null;
+    	return logFile;
     }
     
     public String getDirPath() {
@@ -753,7 +890,7 @@ public class PrintLog {
      * @return
      * @throws IOException 
      */
-    public TxtFile createLogFile() {
+    public TxtFile createLogFile() throws IOException {
     	TxtFile file = null;
     	if(fileNameTimeMode) {
     		file = createNewFile(true);
@@ -767,7 +904,7 @@ public class PrintLog {
      * 确保日志w文件可用
      * @throws IOException
      */
-    public void ensureLogFile() throws Exception {
+    public void ensureLogFile() throws IOException {
     	if(mDir == null) {
     		if(mTxtFile != null) {
     			//用于自定义mTxtFile文件路径的情况(很少用)
@@ -821,7 +958,7 @@ public class PrintLog {
      * @return
      * @throws IOException 
      */
-    public TxtFile createDateLogFile() {
+    public TxtFile createDateLogFile() throws IOException {
     	TxtFile file = createNewFile(false);
     	return file;
     }
@@ -836,6 +973,14 @@ public class PrintLog {
     	if(buffer == null) {
     		this.buffer = new StringBuffer();
     	}
+    }
+    
+    public void setDebugMode(boolean debugMode) {
+    	this.mDebugMode = debugMode;
+    }
+    
+    public boolean isDebugMode() {
+    	return this.mDebugMode;
     }
     
     @Override
