@@ -598,6 +598,9 @@ public class PrintLog {
      */
     private boolean writeToFile(String text, boolean append) throws Exception {
     	if(!isInited()) {
+    		if(isDebugMode()) {
+    			SysLog.e(TAG, "writeToFileSync: Not inited");
+    		}
     		return false;
     	}
     	if(isWriteLogAsyncMode()) {
@@ -620,14 +623,21 @@ public class PrintLog {
     	initFileConsumer();
     	if(mTxtFile == null) {
     		//为空说明之前初始化时已经失败，此处没不要重复创建，有些设备会耗时过长，出现ANR
+    		if(isDebugMode()) {
+    			SysLog.e(TAG, "writeToFileAsync: mFileConsumer is null");
+    		}
     		return false;
     	}
     	if(mFileConsumer != null) {
     		mFileConsumer.setAppend(append);
     		mFileConsumer.doConsume(text);
     		return true;
+    	} else {
+    		if(isDebugMode()) {
+    			SysLog.e(TAG, "writeToFileAsync: mFileConsumer is null");
+    		}
+        	return false;
     	}
-    	return false;
     }
     
     /**
@@ -643,6 +653,9 @@ public class PrintLog {
     	synchronized (mWriteFileLock) {
     		if(mTxtFile == null) {
         		//为空说明之前初始化时已经失败，此处没不要重复创建，有些设备会耗时过长，出现ANR
+    			if(isDebugMode()) {
+        			SysLog.e(TAG, "writeToFileAsync: mFileConsumer is null");
+        		}
         		return false;
         	}
     		boolean written = false;
@@ -687,6 +700,8 @@ public class PrintLog {
     public void doInitFileConsumer() {
     	mLogWarehouse = new LogWarehouse(mWarehouseSizeMax, new LinkedList<String>());
     	mFileConsumer = new LogFileConsumer(mLogWarehouse, mTxtFile);
+    	mFileConsumer.setDebugMode(isDebugMode());
+    	mLogWarehouse.setDebugMode(isDebugMode());
     }
     
     /**
@@ -705,9 +720,8 @@ public class PrintLog {
     public void setWarehouseSizeMax(int warehouseSizeMax) {
     	mWarehouseSizeMax = warehouseSizeMax;
     	if(mLogWarehouse != null) {
-    		
+    		mLogWarehouse.setMax(warehouseSizeMax);
     	}
-    	mLogWarehouse.setMax(warehouseSizeMax);
     }
     
     public void setFileConsumer(LogFileConsumer fileConsumer) {
@@ -977,6 +991,13 @@ public class PrintLog {
     
     public void setDebugMode(boolean debugMode) {
     	this.mDebugMode = debugMode;
+    	if(mFileConsumer != null) {
+    		mFileConsumer.setDebugMode(debugMode);
+    	}
+    	
+    	if(mLogWarehouse != null) {
+    		mLogWarehouse.setDebugMode(debugMode);
+    	}
     }
     
     public boolean isDebugMode() {
