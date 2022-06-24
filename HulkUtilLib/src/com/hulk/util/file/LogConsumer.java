@@ -1,9 +1,6 @@
 package com.hulk.util.file;
 
-import com.hulk.model.pc.Consumer;
-import com.hulk.model.pc.IWarehouse;
-import com.hulk.model.pc.LogConsumer;
-import com.hulk.model.pc.SysLog;
+import com.hulk.model.pc.core.*;
 
 /**
  * 日志打印消费者实现类
@@ -11,20 +8,33 @@ import com.hulk.model.pc.SysLog;
  * @author zhanghao
  *
  */
-class LogFileConsumer extends Consumer<String> {
+public class LogConsumer extends ConsumerBase<String> {
 
-	private static final String TAG = "LogFileConsumer";
+	private static final String TAG = "LogConsumer";
 	
 	TxtFile mTxtFile = null;
 	boolean mAppend = true;
 
-	public LogFileConsumer(IWarehouse<String> warehouse, TxtFile txtFile) {
+	public LogConsumer(IWarehouse<String> warehouse) {
+		super(warehouse);
+	}
+	
+	public LogConsumer(IWarehouse<String> warehouse, TxtFile txtFile, boolean append) {
 		super(warehouse);
 		this.mTxtFile = txtFile;
+		this.mAppend = append;
 	}
 
 	public void setAppend(boolean append) {
-		mAppend = append;
+		this.mAppend = append;
+	}
+	
+	public void setTxtFile(TxtFile txtFile) {
+		this.mTxtFile = txtFile;
+	}
+	
+	public boolean hasTxtFile() {
+		return mTxtFile != null;
 	}
 	
 	/**

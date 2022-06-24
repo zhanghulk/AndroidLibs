@@ -1,6 +1,8 @@
-package com.hulk.model.pc;
+package com.hulk.util.file;
 
 import java.util.LinkedList;
+
+import com.hulk.model.pc.core.WarehouseBase;
 
 /**
  * 日志仓库
@@ -24,17 +26,21 @@ public class LogWarehouse extends WarehouseBase<String> {
 	/**
 	 * 具体放入数据
 	 */
-	protected void doPut(String product) {
-		addProduct(product);
-		logProductInfo(TAG, "doPut", product);
+	protected boolean onPut(String product) {
+		if(isDebugMode()) {
+			logProductInfo(TAG, "onPut", product);
+		}
+		return false;
 	}
 	
 	/**
 	 * 具体获取数据
 	 */
-	protected String doGet() {
+	protected String onGet() {
 		String product = removeFistProduct();
-		logProductInfo(TAG, "doGet", product);
+		if(isDebugMode()) {			
+			logProductInfo(TAG, "doGet", product);
+		}
 		return product;
 	}
 }
