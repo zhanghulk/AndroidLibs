@@ -720,13 +720,30 @@ public class PrintLog {
     
     public void setLogConsumer(LogConsumer logConsumer) {
     	mLogConsumer = logConsumer;
-    	if(!mLogConsumer.hasTxtFile() && mTxtFile != null) {
-    		mLogConsumer.setTxtFile(mTxtFile);
+    	if(mLogConsumer != null && !mLogConsumer.hasTxtFile()) {
+    		setLogConsumerFile(mTxtFile);
     	}
     }
     
     public LogConsumer getLogConsumer() {
     	return mLogConsumer;
+    }
+    
+    public void setLogConsumerFile(TxtFile txtFile) {
+    	setLogConsumerFile(txtFile, true);
+    }
+    
+    public void setLogConsumerFile(TxtFile txtFile, boolean force) {
+    	SysLog.i(TAG, "setLogConsumerFile: txtFile=" + txtFile + ", force=" + force);
+    	if(mLogConsumer != null) {
+    		if(force) {
+    			mLogConsumer.setTxtFile(txtFile);
+    			return;
+    		}
+    		if(!mLogConsumer.hasTxtFile()) {
+    			mLogConsumer.setTxtFile(txtFile);
+    		} 
+    	}
     }
     
     /**
@@ -1051,10 +1068,10 @@ public class PrintLog {
     }
     
     /**
-     * 轻质重新创建文件
+     * 重新创建文件
      * @throws IOException
      */
-    public void createTxtFile() throws IOException {
+    public TxtFile createTxtFile() throws IOException {
     	ensureDir();
     	if(customFilename != null && !customFilename.equals("")) {
     		//用户自定义的文件名
@@ -1064,6 +1081,8 @@ public class PrintLog {
     		//自动创建文件名,安札当前日期时间创建
     		mTxtFile = createLogFile();
     	}
+    	setLogConsumerFile(mTxtFile, false);
+    	return mTxtFile;
     }
     
     public boolean recreateTxtFileIfNeed() throws IOException {
